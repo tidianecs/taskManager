@@ -9,17 +9,16 @@ public class Task implements TaskInterface {
     private String taskName;
     private StateTask taskState;
     private String taskDate;
-    private ArrayList<Task> tasks = new ArrayList<>();
-    private ArrayList<Task> inGoingTasks = new ArrayList<>();
-    private ArrayList<Task> DoneTasks = new ArrayList<>();
 
     Task(String taskName, String taskDate){
+        //I use counter because every task must be unique
         this.taskId = ++counter;
         this.taskName = taskName;
-        this.taskState = new OnGoingState();
+        this.taskState = new ToDoState();
         this.taskDate = taskDate;
     }
 
+    //get and set methods for the task attributs
     public int getTaskId(){
         return taskId;
     }
@@ -35,7 +34,7 @@ public class Task implements TaskInterface {
     public void setTaskDate(String dateInput){
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDate taskDate = LocalDate.parse(dateInput, formatter);
-        String date = taskDate.toString();
+        this.taskDate = taskDate.toString();
     }
 
     public String getTaskDate(){
@@ -49,51 +48,50 @@ public class Task implements TaskInterface {
         return taskState;
     }
 
+    //method to switch state(thanks to state design pattern)
     public void nextState(){
         this.taskState.next(this);
     }
 
-    public void addTask(Task task){
+    //The main methods
+    public void addTask(ArrayList<Task> tasks, ArrayList<Task> inGoingTasks,Task task){
         tasks.add(task);
+        inGoingTasks.add(task);
+        task.setTaskState(new OnGoingState());
     }
 
-    public void delTask(String taskName){
-        for (Task task : tasks) {
-            if (task.getTaskName().equalsIgnoreCase(taskName)) {
-                tasks.remove(task);
-            }
-        }
+    public void delTask(ArrayList<Task> tasks, String taskName){
+        tasks.removeIf(task -> task.getTaskName().equalsIgnoreCase(taskName));
     }
 
-    public void showTasks(){
+    public void showTasks(ArrayList<Task> tasks){
         for (Task task : tasks) {
             System.out.println(task.getTaskName());
         }
     }
 
-    public void markAsDone(Task task){
-        if (task.taskState != new DoneState()) {
-            DoneTasks.add(task);
-            task.delTask(task.taskName);
-        }else{
-            System.out.println("Impossible to mark as done");
+    public void markAsDone(ArrayList<Task> DoneTasks, ArrayList<Task> inGoingTasks, ArrayList<Task> tasks, String taskName){
+        for (Task task : tasks) {
+            if (task.getTaskName().equalsIgnoreCase(taskName) && task.taskState != new DoneState()) {
+                DoneTasks.add(task);
+                task.delTask(inGoingTasks, task.taskName);
+                task.setTaskState(new DoneState());
+            }
         }
     }
 
-    public void showInGoingTask(){
-        for (Task task : tasks) {
+    public void showInGoingTask(ArrayList<Task> inGoingTasks){
+        for (Task task : inGoingTasks) {
             if (task.getStateTask() instanceof OnGoingState) {
-                inGoingTasks.add(task);
                 System.out.println(task.getTaskName() + " | " + task.getTaskDate());    
             }
         }
     }
 
-    public void showDoneTask(){
-        for (Task task : tasks) {
+    public void showDoneTask(ArrayList<Task> DoneTasks){
+        for (Task task : DoneTasks) {
             if (task.getStateTask() instanceof DoneState) {
-                DoneTasks.add(task);
-                task.getTaskName();
+                System.out.println(task.getTaskName() + " | " + task.getTaskDate()); 
             }
         }
     }
